@@ -1,0 +1,27 @@
+name: Auto Deploy to GCP
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ "backend/**", "compose/**", "monitoring/**" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.GCP_VM_IP }}
+          username: ${{ secrets.GCP_VM_USER }}
+          key: ${{ secrets.GCP_VM_SSH_KEY }}
+          script: |
+            cd ~/zyn-empire-runtime && git pull origin main
+            cd backend && npm install --production && cd ..
+            pm2 restart zyn-backend
+      - name: Notify
+        run: |
+          curl -sf -X POST "${{ secrets.DISCORD_WEBHOOK }}" \
+            -H "Content-Type: application/json" \
+            -d '{"content": "ZYN Auto-Deploy complete. Commit: ${{ github.sha }}"}' || true

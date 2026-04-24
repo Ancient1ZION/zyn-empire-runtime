@@ -1,0 +1,40 @@
+name: ZYN 24/7 Health Monitor
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Ping ZYN Backend
+        id: ping
+        continue-on-error: true
+        run: |
+          STATUS=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 10 \
+            http://${{ secrets.GCP_VM_IP }}:3000/ping || echo "000")
+          echo "status=$STATUS"
+          [ "$STATUS" = "200" ] || exit 1
+
+      - name: Alert Discord
+        if: failure()
+        run: |
+          curl -sf -X POST "${{ secrets.DISCORD_WEBHOOK }}" \
+            -H "Content-Type: application/json" \
+            -d '{"content": "ZYN Backend DOWN - GCP VM unreachable. Auto-restart triggered."}' || true
+
+      - name: SSH Auto-Restart
+        if: failure()
+        uses: appleboy/ssh-action@v1.0.3
+        continue-on-error: true
+        with:
+          host: ${{ secrets.GCP_VM_IP }}
+          username: ${{ secrets.GCP_VM_USER }}
+          key: ${{ secrets.GCP_VM_SSH_KEY }}
+          timeout: 30s
+          script: |
+            cd ~/zyn-empire-runtime
+            pm2 restart zyn-backend 2>/dev/null || ./zyn-start.sh

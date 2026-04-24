@@ -1,0 +1,17 @@
+[Unit]
+Description=ZYN Firecrawl Web Scraper (Podman)
+After=network.target
+
+[Service]
+Type=simple
+ExecStartPre=-/usr/bin/podman rm -f zyn-firecrawl
+ExecStart=/usr/bin/podman run --rm --name zyn-firecrawl \
+  -p 127.0.0.1:3002:3002 \
+  -e REDIS_URL=redis://127.0.0.1:6379 \
+  docker.io/mendableai/firecrawl:latest
+ExecStop=/usr/bin/podman stop zyn-firecrawl
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=default.target

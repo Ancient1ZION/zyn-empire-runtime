@@ -1,0 +1,16 @@
+[Unit]
+Description=ZYN Redis Cache (Podman)
+After=network.target
+
+[Service]
+Type=simple
+ExecStartPre=-/usr/bin/podman rm -f zyn-redis
+ExecStart=/usr/bin/podman run --rm --name zyn-redis \
+  -p 127.0.0.1:6379:6379 -v zyn-redis-data:/data \
+  docker.io/redis:7-alpine redis-server --appendonly yes
+ExecStop=/usr/bin/podman stop zyn-redis
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

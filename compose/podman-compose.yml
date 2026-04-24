@@ -1,0 +1,86 @@
+version: "3.9"
+
+networks:
+  zyn-net:
+    driver: bridge
+
+volumes:
+  redis-data:
+  ollama-models:
+
+services:
+  redis:
+    image: docker.io/redis:7-alpine
+    container_name: zyn-redis
+    restart: always
+    command: redis-server --appendonly yes --maxmemory 256mb
+    volumes:
+      - redis-data:/data
+    networks:
+      - zyn-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  zyn-backend:
+    build:
+      context: ../backend
+      dockerfile: Containerfile
+    container_name: zyn-backend
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - ../.env
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - MIROFISH_API=http://mirofish:5001
+      - OLLAMA_BASE_URL=http://ollama:11434
+    networks:
+      - zyn-net
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  ollama:
+    image: docker.io/ollama/ollama:latest
+    container_name: zyn-ollama
+    restart: always
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+    networks:
+      - zyn-net
+
+  firecrawl:
+    image: docker.io/mendableai/firecrawl:latest
+    container_name: zyn-firecrawl
+    restart: always
+    ports:
+      - "3002:3002"
+    environment:
+      - REDIS_URL=redis://redis:6379
+    networks:
+      - zyn-net
+    depends_on:
+      - redis
+
+  watchtower:
+    image: docker.io/containrrr/watchtower:latest
+    container_name: zyn-watchtower
+    restart: always
+    volumes:
+      - /run/user/1000/podman/podman.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_POLL_INTERVAL=86400
+      - WATCHTOWER_CLEANUP=true
+    networks:
+      - zyn-net

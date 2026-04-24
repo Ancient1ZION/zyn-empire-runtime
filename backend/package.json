@@ -1,0 +1,24 @@
+{
+  "name": "zyn-empire-backend",
+  "version": "6.6.0",
+  "description": "ZYN Empire AI Agent Backend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "pm2": "pm2 start server.js --name zyn-backend"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "ioredis": "^5.3.2",
+    "node-cron": "^3.0.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": { "node": ">=20.0.0" },
+  "license": "MIT"
+}

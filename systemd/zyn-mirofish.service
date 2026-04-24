@@ -1,0 +1,14 @@
+[Unit]
+Description=ZYN MiroFish Swarm Intelligence
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/MiroFish
+ExecStart=/usr/bin/podman-compose up
+ExecStop=/usr/bin/podman-compose down
+Restart=always
+RestartSec=15
+
+[Install]
+WantedBy=default.target

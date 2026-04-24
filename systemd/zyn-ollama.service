@@ -1,0 +1,14 @@
+[Unit]
+Description=ZYN Ollama Local AI
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/ollama serve
+Restart=always
+RestartSec=5
+Environment=OLLAMA_HOST=0.0.0.0
+Environment=OLLAMA_KEEP_ALIVE=24h
+
+[Install]
+WantedBy=default.target

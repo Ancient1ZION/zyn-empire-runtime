@@ -1,0 +1,16 @@
+[Unit]
+Description=ZYN Empire Agent Backend
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/zyn-empire-runtime/backend
+EnvironmentFile=%h/zyn-empire-runtime/.env
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=10
+MemoryMax=512M
+
+[Install]
+WantedBy=default.target
